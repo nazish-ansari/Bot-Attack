@@ -17,11 +17,11 @@ define(['N/record', 'N/runtime', 'N/search', 'N/email', 'N/format'],
             
         try {
             // Only apply to web store orders
-            if (!context.newRecord.getValue({fieldId: 'custbody_order_source'}) || 
-                context.newRecord.getValue({fieldId: 'custbody_order_source'}) !== 'Web Store')
+            if (!context.newRecord.getValue({fieldId: 'custbody_dps_order_source'}) || 
+                context.newRecord.getValue({fieldId: 'custbody_dps_order_source'}) !== 'Web Store')
                 return;
                 
-            const ipAddress = context.newRecord.getValue({fieldId: 'custbody_customer_ip'});
+            const ipAddress = context.newRecord.getValue({fieldId: 'custbody_dps_customer_ip'});
             if (!ipAddress) return;
             
             // Check for recent orders from this IP
@@ -31,7 +31,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/email', 'N/format'],
             const orderSearch = search.create({
                 type: search.Type.SALES_ORDER,
                 filters: [
-                    ['custbody_customer_ip', 'is', ipAddress],
+                    ['custbody_dps_customer_ip', 'is', ipAddress],
                     'AND',
                     ['datecreated', 'after', format.format({value: hourAgo, type: format.Type.DATETIME})]
                 ]
@@ -42,7 +42,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/email', 'N/format'],
             if (orderCount >= MAX_ORDERS_PER_HOUR) {
                 // Flag the transaction
                 context.newRecord.setValue({
-                    fieldId: 'custbody_bot_flag',
+                    fieldId: 'custbody_dps_bot_flag',
                     value: true
                 });
                 
@@ -64,13 +64,13 @@ define(['N/record', 'N/runtime', 'N/search', 'N/email', 'N/format'],
                 
                 // Log to custom record for analysis
                 record.create({
-                    type: 'customrecord_bot_detection_log',
+                    type: 'customrecord_dps_bot_detection_log',
                     isDynamic: true,
                     values: {
-                        custrecord_detection_timestamp: new Date(),
-                        custrecord_ip_address: ipAddress,
-                        custrecord_order_count: orderCount,
-                        custrecord_detection_type: 'Excessive Orders'
+                        custrecord_dps_detection_timestamp: new Date(),
+                        custrecord_dps_ip_address: ipAddress,
+                        custrecord_dps_order_count: orderCount,
+                        custrecord_dps_detection_type: 'Excessive Orders'
                     }
                 }).save();
             }
