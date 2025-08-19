@@ -8,7 +8,7 @@ define(['N/search', 'N/record', 'N/email', 'N/runtime'],
     function(search, record, email, runtime) {
     
     // Configuration
-    const DECLINE_THRESHOLD = 30; // Percentage of declines that triggers an alert
+    const DECLINE_THRESHOLD = 40; // Percentage of declines that triggers an alert
     const MIN_TRANSACTIONS = 10;  // Minimum transactions to consider for analysis
     const ADMIN_EMAIL = 'security@yourcompany.com';
     
