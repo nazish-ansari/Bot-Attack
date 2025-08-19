@@ -12,13 +12,12 @@ define(['N/record', 'N/runtime', 'N/search', 'N/email', 'N/format'],
         const ADMIN_EMAIL = 'Nazish@dpstechs.com';
 
         function beforeSubmit(context) {
-            if (context.type !== context.UserEventType.CREATE)
-                return;
-
+            if (context.type !== context.UserEventType.DELETE)
+            {
             try {
                 log.debug('runtime.executionContext', runtime.executionContext)
                 // Only apply to web store orders
-                if (runtime.executionContext === runtime.ContextType.WEBSERVICES || runtime.executionContext === runtime.ContextType.CUSTOMER_CENTER) {
+                if (runtime.executionContext === runtime.ContextType.WEBSERVICES || runtime.executionContext === runtime.ContextType.CUSTOMER_CENTER || runtime.executionContext === runtime.ContextType.USER_INTERFACE) {
                     context.newRecord.setValue({
                         fieldId: 'custbody_dps_order_source',
                         value: 'Web Store'
@@ -29,17 +28,27 @@ define(['N/record', 'N/runtime', 'N/search', 'N/email', 'N/format'],
                     log.debug('ipAddress', ipAddress)
 
                     // Check for recent orders from this IP
-                    const hourAgo = new Date();
-                    hourAgo.setHours(hourAgo.getHours() - 1);
+const now = new Date();
+now.setMinutes(now.getMinutes() + 1); // Add 1 minute
 
-                    const orderSearch = search.create({
-                        type: search.Type.SALES_ORDER,
-                        filters: [
-                            ['custbody_dps_customer_ip', 'is', ipAddress],
-                            'AND',
-                            ['datecreated', 'after', format.format({ value: hourAgo, type: format.Type.DATETIME })]
-                        ]
-                    });
+const todayMidnight = new Date();
+todayMidnight.setHours(0, 0, 0, 0);
+
+// Custom formatted strings (no seconds)
+const midnightStr = formatDateNoSeconds(todayMidnight);
+const nowStr = formatDateNoSeconds(now);
+
+log.debug('Search Window', midnightStr + ' → ' + nowStr);
+
+const orderSearch = search.create({
+    type: search.Type.SALES_ORDER,
+    filters: [
+        ['type','anyof','SalesOrd'], 'AND',
+        ['mainline','is','T'], 'AND',
+        ['custbody_dps_customer_ip','is', ipAddress], 'AND',
+        ['datecreated','onorafter', midnightStr, nowStr]
+    ]
+});
 
                     const orderCount = orderSearch.runPaged().count;
                     log.debug('orderCount', orderCount)
@@ -84,12 +93,28 @@ define(['N/record', 'N/runtime', 'N/search', 'N/email', 'N/format'],
             } catch (e) {
                 log.error({
                     title: 'Error in bot detection script',
-                    details: e.toString()
+                    details: e
                 });
+            }
             }
         }
 
         return {
             beforeSubmit: beforeSubmit
         };
+      function formatDateNoSeconds(dateObj) {
+    const month = dateObj.getMonth() + 1;
+    const day = dateObj.getDate();
+    const year = dateObj.getFullYear();
+
+    let hours = dateObj.getHours();
+    let minutes = dateObj.getMinutes();
+    const ampm = hours >= 12 ? 'pm' : 'am';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 → 12
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+
+    return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes + ' ' + ampm;
+}
     });
