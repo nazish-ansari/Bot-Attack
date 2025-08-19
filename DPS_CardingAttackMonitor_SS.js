@@ -2,7 +2,7 @@
  * @NApiVersion 2.1
  * @NScriptType ScheduledScript
  * @NModuleScope SameAccount
- * @description Monitors for unusual credit card decline patterns indicating carding attacks
+ * @description Monitors for unusual credit card decline patterns indicating carding bot attacks
  */
 define(['N/search', 'N/record', 'N/email', 'N/runtime'],
     function(search, record, email, runtime) {
